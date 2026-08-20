@@ -34,13 +34,13 @@ pipeline {
             steps {
                 sh "docker stop ${CONTAINER_NAME} || true"
                 sh "docker rm ${CONTAINER_NAME} || true"
-                sh "docker run -d --name ${CONTAINER_NAME} -p 8080:8080 ${IMAGE_NAME}:${IMAGE_TAG}"
+                sh "docker run -d --name ${CONTAINER_NAME} -p 8082:8080 ${IMAGE_NAME}:${IMAGE_TAG}"
                 echo "✅ 容器部署完成"
             }
         }
         stage('Verify') {
             steps {
-                sh "sleep 15 && curl http://localhost:8080"
+                sh "sleep 15 && curl http://localhost:8082"
                 echo '✅ 服务验证通过'
             }
         }
