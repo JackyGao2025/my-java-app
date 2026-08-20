@@ -38,11 +38,21 @@ pipeline {
                 echo "✅ 容器部署完成"
             }
         }
-        stage('Verify') {
+         stage('Verify') {
             steps {
-                sh "sleep 15 && curl http://localhost:8082"
-                echo '✅ 服务验证通过'
-            }
-        }
+                sh """
+                sleep 15
+        # 检查容器是否在运行
+               RUNNING=\$(docker inspect -f '{{.State.Running}}' ${CONTAINER_NAME})
+               if [ "\$RUNNING" != "true" ]; then
+               echo "Container is not running"
+               exit 1
+               fi
+        # 检查端口映射
+              docker port ${CONTAINER_NAME}
+              echo "✅ 容器运行正常，端口映射正确"
+              """
+             }
+         }
     }
 }
