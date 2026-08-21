@@ -10,6 +10,7 @@ pipeline {
     environment {
         IMAGE_NAME = "my-java-app"
         IMAGE_TAG = "${BUILD_NUMBER}"
+        MINIKUBE_HOME = "/var/jenkins_home/.minikube"
     }
     stages {
         stage('Clean Workspace') {
