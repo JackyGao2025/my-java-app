@@ -17,6 +17,7 @@ spec:
       containers:
       - name: my-java-app
         image: my-java-app:${IMAGE_TAG}
+        imagePullPolicy: Never
         ports:
         - containerPort: 8080
         readinessProbe:
