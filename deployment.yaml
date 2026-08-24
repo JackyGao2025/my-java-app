@@ -14,9 +14,11 @@ spec:
       labels:
         app: my-java-app
     spec:
+      imagePullSecrets:                     # 新增：引用 ACR 凭据
+      - name: acr-secret
       containers:
       - name: my-java-app
-        image: my-java-app:${IMAGE_TAG}
+        image: crpi-lounudtd1uqkxxn7.cn-shanghai.personal.cr.aliyuncs.com/my-app-space-2026/my-java-app:${IMAGE_TAG}
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
@@ -31,4 +33,4 @@ spec:
             path: /
             port: 8080
           initialDelaySeconds: 30
-          periodSeconds: 10
+          periodSeconds: 10:

@@ -8,16 +8,13 @@ pipeline {
         maven 'maven3'
     }
     environment {
+        DOCKER_REGISTRY = "crpi-lounudtd1uqkxxn7.cn-shanghai.personal.cr.aliyuncs.com/my-app-space-2026"
         IMAGE_NAME = "my-java-app"
         IMAGE_TAG = "${BUILD_NUMBER}"
-        MINIKUBE_HOME = "/var/jenkins_home/.minikube"
     }
     stages {
         stage('Clean Workspace') {
-            steps {
-                cleanWs()
-                // 注意：此处不再重复 checkout，后续 Checkout 阶段会拉取代码
-            }
+            steps { cleanWs() }
         }
         stage('Checkout') {
             steps {
@@ -35,39 +32,50 @@ pipeline {
         }
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
-                echo "✅ Docker 镜像构建完成: ${IMAGE_NAME}:${IMAGE_TAG}"
+                sh "docker build -t ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} ."
+                echo "✅ Docker 镜像构建完成"
             }
         }
-        stage('Load Image to Minikube') {
+        stage('Push Image to ACR') {
             steps {
-                sh "/usr/local/bin/minikube image load ${IMAGE_NAME}:${IMAGE_TAG}"
-                echo "✅ 镜像已加载到 minikube"
+                withCredentials([usernamePassword(
+                    credentialsId: 'aliyun-acr-credentials',
+                    usernameVariable: 'ACR_USER',
+                    passwordVariable: 'ACR_PASS'
+                )]) {
+                    sh """
+                        echo \$ACR_PASS | docker login --username=\$ACR_USER ${DOCKER_REGISTRY%%/*} --password-stdin
+                        docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                    """
+                }
+                echo '✅ 镜像已推送到阿里云 ACR'
             }
         }
         stage('Deploy to Kubernetes') {
             steps {
                 sh """
-                    sed 's/\${IMAGE_TAG}/${IMAGE_TAG}/g' deployment.yaml > deployment-resolved.yaml
+                    sed 's|\${IMAGE_TAG}|${IMAGE_TAG}|g' deployment.yaml > deployment-resolved.yaml
                     kubectl apply -f deployment-resolved.yaml
                     kubectl apply -f service.yaml
+                    kubectl rollout status deployment/my-java-app --timeout=180s
                 """
-                echo '✅ 部署清单已应用（Pod 将在后台更新）'
+                echo '✅ 部署完成'
             }
         }
         stage('Verify') {
             steps {
                 sh """
-                    echo "等待 Pod 更新..."
-                    sleep 30
+                    sleep 10
                     kubectl get pods -l app=my-java-app
+                    curl -s http://\$(minikube ip):30080
                 """
-                echo '✅ 部署完成，请手动检查 Pod 状态'
+                echo '✅ 验证完成'
             }
         }
     }
     post {
-        success { echo '🎉 整个 CI/CD 流水线执行成功！' }
+        success { echo '🎉 流水线执行成功！' }
         failure { echo '❌ 流水线执行失败，请查看日志' }
     }
 }
+
