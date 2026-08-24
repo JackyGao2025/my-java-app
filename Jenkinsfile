@@ -20,7 +20,7 @@ pipeline {
             steps {
                 git branch: 'main',
                     url: 'https://github.com/JackyGao2025/my-java-app.git',
-                    credentialsId: 'github-https-credentials'   // 改为 HTTPS 凭据
+                    credentialsId: 'github-https-credentials'
                 echo '✅ 代码拉取完成'
             }
         }
@@ -44,8 +44,8 @@ pipeline {
                     passwordVariable: 'ACR_PASS'
                 )]) {
                     sh """
-                        echo \$ACR_PASS | docker login --username=\$ACR_USER ${DOCKER_REGISTRY%%/*} --password-stdin
-                        docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                        echo \$ACR_PASS | docker login --username=\$ACR_USER \${DOCKER_REGISTRY%%/*} --password-stdin
+                        docker push \${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
                     """
                 }
                 echo '✅ 镜像已推送到阿里云 ACR'
@@ -67,7 +67,9 @@ pipeline {
                 sh """
                     sleep 10
                     kubectl get pods -l app=my-java-app
-                    curl -s http://\$(minikube ip):30080
+                    # 如果容器内没有 minikube 命令，改用 NodePort 访问宿主机 IP
+                    NODE_PORT=\$(kubectl get svc my-java-app -o jsonpath='{.spec.ports[0].nodePort}')
+                    curl -s http://\$(hostname -I | awk '{print \$1}'):\${NODE_PORT}
                 """
                 echo '✅ 验证完成'
             }
