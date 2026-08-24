@@ -19,8 +19,8 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                    url: 'git@github.com:JackyGao2025/my-java-app.git',
-                    credentialsId: 'github-ssh-key'
+                    url: 'https://github.com/JackyGao2025/my-java-app.git',
+                    credentialsId: 'github-https-credentials'   // 改为 HTTPS 凭据
                 echo '✅ 代码拉取完成'
             }
         }
@@ -78,4 +78,3 @@ pipeline {
         failure { echo '❌ 流水线执行失败，请查看日志' }
     }
 }
-
