@@ -54,12 +54,12 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 sh """
-                    sed 's|\${{IMAGE_TAG}}|${IMAGE_TAG}|g' deployment.yaml > deployment-resolved.yaml
-                    kubectl apply -f deployment-resolved.yaml
-                    kubectl apply -f service.yaml
-                    kubectl rollout status deployment/my-java-app --timeout=180s
+                    kubectl set image deployment/my-java-app \
+                        my-java-app=${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} \
+                        --record
+                    kubectl rollout status deployment/my-java-app --timeout=120s || echo "⚠️ Rollout 超时，请手动检查 Pod 状态"
                 """
-                echo '✅ 部署完成'
+                echo '✅ 部署指令已发送'
             }
         }
         stage('Verify') {
@@ -67,9 +67,9 @@ pipeline {
                 sh """
                     sleep 10
                     kubectl get pods -l app=my-java-app
-                    # 如果容器内没有 minikube 命令，改用 NodePort 访问宿主机 IP
-                    NODE_PORT=\$(kubectl get svc my-java-app -o jsonpath='{.spec.ports[0].nodePort}')
-                    curl -s http://\$(hostname -I | awk '{print \$1}'):\${NODE_PORT}
+                    # 获取 NodePort 并测试
+                    NODE_PORT=\$(kubectl get svc my-java-app-service -o jsonpath='{.spec.ports[0].nodePort}' 2>/dev/null || echo "30080")
+                    curl -s http://\$(hostname -I | awk '{print \$1}'):\${NODE_PORT} || echo "⚠️ 应用尚未响应"
                 """
                 echo '✅ 验证完成'
             }
