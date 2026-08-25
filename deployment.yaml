@@ -18,7 +18,7 @@ spec:
       - name: acr-secret
       containers:
       - name: my-java-app
-        image: crpi-lounudtd1uqkxxn7.cn-shanghai.personal.cr.aliyuncs.com/my-app-space-2026/my-java-app:${IMAGE_TAG}
+        image: crpi-lounudtd1uqkxxn7.cn-shanghai.personal.cr.aliyuncs.com/my-app-space-2026/my-java-app:${{IMAGE_TAG}}
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
@@ -33,4 +33,4 @@ spec:
             path: /
             port: 8080
           initialDelaySeconds: 30
-          periodSeconds: 10:
+          periodSeconds: 10

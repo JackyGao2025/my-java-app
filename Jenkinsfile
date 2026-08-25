@@ -54,7 +54,7 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 sh """
-                    sed 's|\${IMAGE_TAG}|${IMAGE_TAG}|g' deployment.yaml > deployment-resolved.yaml
+                    sed 's|\${{IMAGE_TAG}}|${IMAGE_TAG}|g' deployment.yaml > deployment-resolved.yaml
                     kubectl apply -f deployment-resolved.yaml
                     kubectl apply -f service.yaml
                     kubectl rollout status deployment/my-java-app --timeout=180s
